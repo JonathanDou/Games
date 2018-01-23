@@ -73,11 +73,11 @@ void check() {
             Sleep(1000);
             restart();
         } else if((box[0][0] == box[1][1]) && (box[0][0] == box[2][2])) {
-            std::cout << box[0][z] << " wins!" << std::endl;
+            std::cout << box[1][1] << " wins!" << std::endl;
             Sleep(1000);
             restart();
         } else if((box[2][0] == box[1][1]) && (box[0][2] == box[2][0])) {
-            std::cout << box[0][z] << " wins!" << std::endl;
+            std::cout << box[1][1] << " wins!" << std::endl;
             Sleep(1000);
             restart();
         } else if(c == 9) {
