@@ -1,1 +1,5 @@
-some games I made with c++ and sfml. 
+# Games
+Some games made with c++ and sfml. 
+
+## Authors
+**Jonathan Dou**
