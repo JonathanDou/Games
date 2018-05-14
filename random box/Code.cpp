@@ -6,6 +6,7 @@
 
 sf::RenderWindow window(sf::VideoMode(700, 500), "Random Box");
 sf::Event event;
+
 sf::Clock tanktimer;
 sf::Clock falltimer;
 sf::Clock jtimer;
@@ -14,13 +15,19 @@ sf::Clock atimer;
 sf::Clock ctimer;
 sf::Clock etimer;
 sf::Clock stimer;
+
 sf::CircleShape tank;
 sf::CircleShape bullet;
-sf::RectangleShape gun;
 sf::CircleShape cenemy;
+sf::CircleShape tenemy;
+
+sf::RectangleShape gun;
 sf::RectangleShape senemy;
+
 sf::Text text;
 sf::Text gametext;
+sf::Text controls;
+
 sf::Font font;
 sf::FloatRect TextRect;
 
@@ -28,6 +35,7 @@ std::stringstream ss;
 std::string scoretext;
 
 int score;
+bool start = false;
 
 int x = 350;
 int y = 490;
@@ -83,6 +91,12 @@ void load() {
 
     srand(time(0));
 
+    controls.setString("Controls: Arrow Keys to Move, Z to Jump, X to Shoot");
+    controls.setCharacterSize(20);
+    controls.setFillColor(sf::Color::Green);
+    controls.setFont(font);
+    controls.setPosition(10,470);
+
     tank.setRadius(10);
     tank.setOrigin(10,10);
     tank.setFillColor(sf::Color::Blue);
@@ -102,6 +116,11 @@ void load() {
     senemy.setFillColor(sf::Color::Green);
     senemy.setSize(sf::Vector2f(40,40));
     senemy.setOrigin(20,20);
+
+    tenemy.setPointCount(3);
+    tenemy.setRadius(20);
+    tenemy.setOrigin(20,20);
+    tenemy.setFillColor(sf::Color::Magenta);
 
     for(int i=0; i<100; i++) {
         cenemyalive[i] = false;
@@ -370,8 +389,11 @@ int main() {
             if(event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Z) {
                 jumpr = true;
             }
+            if(event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Escape) {
+                start = false;
+            }
             if(event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Space) {
-                if(gameover == true) {
+                if(gameover == true || start == false) {
                     gameover = false;
 
                     for(int i=0; i<100; i++) {
@@ -387,21 +409,37 @@ int main() {
                     score = 0;
                     cenemycount = 0;
                     senemycount = 0;
+
+                    start = true;
                 }
             }
         }
-        if(gameover == false) {
-            if(bfall == true) {
-                fall();
+
+        if(start == true) {
+            if(gameover == false) {
+                if(bfall == true) {
+                    fall();
+                }
+                tankmove();
+                bulletmove();
+                cspawn();
+                sspawn();
+                enemymove();
+                draw();
+            } else {
+                gameend();
             }
-            tankmove();
-            bulletmove();
-            cspawn();
-            sspawn();
-            enemymove();
-            draw();
         } else {
-            gameend();
+            gametext.setString("Press Space To Start");
+            TextRect = gametext.getLocalBounds();
+
+            gametext.setOrigin(TextRect.width/2, TextRect.height/2);
+            gametext.setPosition(350,230);
+
+            window.clear();
+            window.draw(gametext);
+            window.draw(controls);
+            window.display();
         }
      }
 }
