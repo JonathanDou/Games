@@ -501,10 +501,10 @@ void draw() {
 }
 
 int main() {
+    
+    load();
 
-     load();
-
-     while(window.isOpen()) {
+    while(window.isOpen()) {
         while(window.pollEvent(event)) {
             if(event.type == sf::Event::Closed) {
                 window.close();
@@ -584,6 +584,5 @@ int main() {
             window.draw(controls);
             window.display();
         }
-     }
-}
+    }
 }
