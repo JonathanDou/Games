@@ -3,10 +3,15 @@
 #include <ctime>
 #include <iostream>
 #include <windows.h>
+#include <math.h>
+#include <fstream>
 
 sf::RenderWindow window(sf::VideoMode(700, 500), "Random Box");
 sf::Event event;
 
+std::fstream file;
+
+sf::Clock cbosstimer;
 sf::Clock tanktimer;
 sf::Clock falltimer;
 sf::Clock jtimer;
@@ -15,17 +20,21 @@ sf::Clock atimer;
 sf::Clock ctimer;
 sf::Clock etimer;
 sf::Clock stimer;
+sf::Clock ttimer;
 
 sf::CircleShape tank;
 sf::CircleShape bullet;
 sf::CircleShape cenemy;
 sf::CircleShape tenemy;
 
+sf::CircleShape cboss;
+
 sf::RectangleShape gun;
 sf::RectangleShape senemy;
 
 sf::Text text;
 sf::Text gametext;
+sf::Text high;
 sf::Text controls;
 
 sf::Font font;
@@ -33,9 +42,19 @@ sf::FloatRect TextRect;
 
 std::stringstream ss;
 std::string scoretext;
+std::string hightext;
+
+bool cbossalive = false;
+bool cbossfight = false;
+double cbossspeed = 0;
+int cbosshp = 100;
+double cbossx = (rand()%2)*700;
+double cbossy = 400;
 
 int score;
 bool start = false;
+
+double angle;
 
 int x = 350;
 int y = 490;
@@ -52,7 +71,7 @@ int bulletcount = 0;
 int maxbullets = 5;
 
 int jump = 0;
-int maxjump = 3;
+int maxjump = 2;
 
 int bulletx[5];
 int bullety[5];
@@ -75,6 +94,15 @@ double senemyspeed[100];
 int slife[100];
 int smax = 5;
 
+bool tenemyalive[100];
+int tenemycount = 0;
+int tenemyx[100];
+int tenemyy[100];
+double tenemyspeed[100];
+int tlife[100];
+int tmax = 3;
+int highscore;
+
 void load() {
     font.loadFromFile("font.ttf");
 
@@ -83,6 +111,11 @@ void load() {
     text.setFont(font);
     text.setCharacterSize(20);
     text.setPosition(10,10);
+
+    high.setFillColor(sf::Color::Green);
+    high.setFont(font);
+    high.setCharacterSize(20);
+    high.setPosition(670,10);
 
     gametext.setFillColor(sf::Color::Green);
     gametext.setFont(font);
@@ -118,21 +151,28 @@ void load() {
     senemy.setOrigin(20,20);
 
     tenemy.setPointCount(3);
-    tenemy.setRadius(20);
-    tenemy.setOrigin(20,20);
+    tenemy.setRadius(40);
+    tenemy.setOrigin(40,40);
     tenemy.setFillColor(sf::Color::Magenta);
+
+    cboss.setFillColor(sf::Color::Yellow);
+    cboss.setRadius(100);
+    cboss.setOrigin(100,100);
 
     for(int i=0; i<100; i++) {
         cenemyalive[i] = false;
         cenemyspeed[i] = 2;
 
         senemyalive[i] = false;
+
+        tenemyalive[i] = false;
+        tenemyspeed[i] = 2;
     }
 }
 
 void tankmove() {
     if(tanktimer.getElapsedTime().asMilliseconds() > 10) {
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && (x > 10)) {
             x = x - tankspeed;
             if(direction == true) {
                 gun.rotate(180);
@@ -140,7 +180,7 @@ void tankmove() {
             }
             tanktimer.restart();
         }
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && (x < 690)) {
             x = x + tankspeed;
             if(direction == false) {
                 gun.rotate(180);
@@ -158,7 +198,7 @@ void tankmove() {
             }
         }
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)) {
-            if(bulletcount != maxbullets && btimer.getElapsedTime().asMilliseconds() > 200) {
+            if(bulletcount != maxbullets && btimer.getElapsedTime().asMilliseconds() > 150) {
                 for(int n=0; n<maxbullets; n++) {
                     if(bullets[n] == false) {
                         bullets[n] = true;
@@ -189,7 +229,7 @@ void bulletmove() {
                     bulletcount--;
                 }
                 for(int n=0; n<cmax; n++) {
-                    if((cenemyalive[n] == true) && (abs(bulletx[i] - cenemyx[n]) < 15) && (abs(bullety[i] - cenemyy[n]) < 15) && bullets[i] == true) {
+                    if((cenemyalive[n] == true) && (abs(bulletx[i] - cenemyx[n]) < 20) && (abs(bullety[i] - cenemyy[n]) < 20) && bullets[i] == true) {
                         clife[n]--;
                         bullets[i] = false;
                         bulletcount--;
@@ -201,7 +241,7 @@ void bulletmove() {
                         break;
                     }
                 }
-                for(int n=0; n<cmax; n++) {
+                for(int n=0; n<smax; n++) {
                     if((senemyalive[n] == true) && (abs(bulletx[i] - senemyx[n]) < 20) && (abs(bullety[i] - senemyy[n]) < 20) && bullets[i] == true) {
                         slife[n]--;
                         bullets[i] = false;
@@ -210,6 +250,19 @@ void bulletmove() {
                             senemyalive[n] = false;
                             senemycount--;
                             score = score + 2;
+                        }
+                        break;
+                    }
+                }
+                for(int n=0; n<tmax; n++) {
+                    if((tenemyalive[n] == true) && (abs(bulletx[i] - tenemyx[n]) < 35) && (abs(bullety[i] - tenemyy[n]) < 35) && bullets[i] == true) {
+                        tlife[n]--;
+                        bullets[i] = false;
+                        bulletcount--;
+                        if(tlife[n] == 0) {
+                            tenemyalive[n] = false;
+                            tenemycount--;
+                            score = score + 5;
                         }
                         break;
                     }
@@ -253,14 +306,37 @@ void enemymove() {
                     }
                     senemyx[d] = senemyx[d] + senemyspeed[d];
                 }
-                if(abs(x-senemyx[d]) < 30 && abs(y-senemyy[d]) < 30) {
+                if(abs(x-senemyx[d]) < 25 && abs(y-senemyy[d]) < 25) {
                     gameover = true;
                     Sleep(500);
                 }
             }
         }
 
-        std::cout << senemycount;
+        for(int e=0; e<tmax; e++) {
+            if(tenemyalive[e] == true) {
+                if(x-tenemyx[e] != 0) {
+                    angle = 180*(atan((y-tenemyy[e])/(x-tenemyx[e])))/M_PI;
+                }
+
+                if(tenemyx[e] < x) {
+                    tenemyx[e] = tenemyx[e] + abs(tenemyspeed[e]*cos(angle));
+                } else {
+                    tenemyx[e] = tenemyx[e] - abs(tenemyspeed[e]*cos(angle));
+                }
+                if(tenemyy[e] < y) {
+                    tenemyy[e] = tenemyy[e] + abs(tenemyspeed[e]*sin(angle));
+                } else {
+                    tenemyy[e] = tenemyy[e] - abs(tenemyspeed[e]*sin(angle));
+                }
+
+                if(abs(x-tenemyx[e]) < 25 && abs(y-tenemyy[e]) < 25) {
+                    gameover = true;
+                    Sleep(500);
+                }
+            }
+        }
+
         etimer.restart();
 
     }
@@ -281,7 +357,7 @@ void fall() {
 }
 
 void cspawn() {
-    if(ctimer.getElapsedTime().asMilliseconds() > 1000 && cenemycount != cmax) {
+    if(ctimer.getElapsedTime().asSeconds() > 1 && cenemycount != cmax) {
         for(int a=0; a<cmax; a++) {
             if(cenemyalive[a] == false) {
                 if(rand()%2 == 0) {
@@ -303,9 +379,10 @@ void cspawn() {
 }
 
 void sspawn() {
-    if(stimer.getElapsedTime().asMilliseconds() > 3000 && senemycount != smax && score > 10) {
+    if(stimer.getElapsedTime().asSeconds() > 3 && senemycount != smax && score > 10) {
         for(int b=0; b<smax; b++) {
             if(senemyalive[b] == false) {
+
                 senemyx[b] = rand()%660+20;
                 senemyy[b] = -20;
 
@@ -317,6 +394,40 @@ void sspawn() {
                 break;
             }
         }
+    }
+}
+
+void tspawn() {
+    if(ttimer.getElapsedTime().asSeconds() > 7 && tenemycount != tmax && score >= 25) {
+        for(int c=0; c<tmax; c++) {
+            if(tenemyalive[c] == false) {
+
+                tenemyx[c] = 740*(rand()%2)-40;
+                tenemyy[c] = rand()%250+230;
+
+                tenemyalive[c] = true;
+                tlife[c] = 5;
+                tenemycount++;
+                ttimer.restart();
+                break;
+            }
+        }
+
+    }
+}
+
+void cbossmove() {
+    if(cbosstimer.getElapsedTime().asMilliseconds() > 10) {
+
+        if(cbossx > 350) {
+            cbossspeed = cbossspeed - 0.1;
+        } else {
+            cbossspeed = cbossspeed + 0.1;
+        }
+
+        cbossx = cbossx + cbossspeed;
+
+        cbosstimer.restart();
     }
 }
 
@@ -338,13 +449,11 @@ void gameend() {
 }
 
 void draw() {
-
     ss << score;
     ss >> scoretext;
     text.setString(scoretext);
     ss.str("");
     ss.clear();
-
 
     tank.setPosition(x,y);
     gun.setPosition(x,y);
@@ -371,7 +480,21 @@ void draw() {
         }
     }
 
+    for(int i=0; i<tmax; i++) {
+        if(tenemyalive[i] == true) {
+            tenemy.setPosition(tenemyx[i], tenemyy[i]);
+            window.draw(tenemy);
+        }
+    }
+
     window.draw(text);
+    window.draw(high);
+
+    if(cbossalive == true) {
+        cboss.setPosition(cbossx,cbossy);
+        window.draw(cboss);
+    }
+
     window.draw(gun);
     window.draw(tank);
     window.display();
@@ -401,6 +524,12 @@ int main() {
                         cenemyspeed[i] = 2;
 
                         senemyalive[i] = false;
+
+                        tenemyalive[i] = false;
+
+                        if(i<5) {
+                            bullets[i] = false;
+                        }
                     }
 
                     x = 350;
@@ -409,8 +538,10 @@ int main() {
                     score = 0;
                     cenemycount = 0;
                     senemycount = 0;
+                    tenemycount = 0;
 
                     start = true;
+                    bulletcount = 0;
                 }
             }
         }
@@ -422,10 +553,22 @@ int main() {
                 }
                 tankmove();
                 bulletmove();
-                cspawn();
-                sspawn();
+
+                if(cbossalive == false) {
+                    cspawn();
+                    sspawn();
+                    tspawn();
+                }
                 enemymove();
                 draw();
+
+                if(score > 100 && cbossfight == false) {
+                    cbossalive = true;
+                    cbossfight = true;
+                }
+                if(cbossalive == true) {
+                    cbossmove();
+                }
             } else {
                 gameend();
             }
@@ -442,4 +585,5 @@ int main() {
             window.display();
         }
      }
+}
 }
