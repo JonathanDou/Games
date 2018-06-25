@@ -11,6 +11,7 @@ sf::Event event;
 
 std::fstream file;
 
+sf::Clock sbosstimer;
 sf::Clock cbosstimer;
 sf::Clock tanktimer;
 sf::Clock falltimer;
@@ -32,6 +33,8 @@ sf::CircleShape cboss;
 sf::RectangleShape gun;
 sf::RectangleShape senemy;
 
+sf::RectangleShape sboss;
+
 sf::Text text;
 sf::Text gametext;
 sf::Text high;
@@ -51,10 +54,18 @@ int cbosshp;
 double cbossx;
 double cbossy = 400;
 
+bool sbossalive = false;
+bool sbossfight = false;
+double sbossspeedx = 0;
+double sbossspeedy = 0;
+
+int sbosshp;
+double sbossx;
+double sbossy = 450;
+
 int cspawntime = 1000;
 int sspawntime = 3000;
 int tspawntime = 7;
-
 
 int score;
 bool start = false;
@@ -156,13 +167,17 @@ void load() {
     senemy.setOrigin(20,20);
 
     tenemy.setPointCount(3);
-    tenemy.setRadius(40);
-    tenemy.setOrigin(40,40);
+    tenemy.setRadius(60);
+    tenemy.setOrigin(60,60);
     tenemy.setFillColor(sf::Color::Magenta);
 
     cboss.setFillColor(sf::Color::Yellow);
     cboss.setRadius(100);
     cboss.setOrigin(100,100);
+
+    sboss.setFillColor(sf::Color::Green);
+    sboss.setSize(sf::Vector2f(100,100));
+    sboss.setOrigin(50,50);
 
     for(int i=0; i<100; i++) {
         cenemyalive[i] = false;
@@ -260,7 +275,7 @@ void bulletmove() {
                     }
                 }
                 for(int n=0; n<tmax; n++) {
-                    if((tenemyalive[n] == true) && (abs(bulletx[i] - tenemyx[n]) < 35) && (abs(bullety[i] - tenemyy[n]) < 35) && bullets[i] == true) {
+                    if((tenemyalive[n] == true) && (abs(bulletx[i] - tenemyx[n]) < 35) && ((bullety[i] - tenemyy[n]) < 35) && ((tenemyy[n] - bullety[i]) < 55) && bullets[i] == true) {
                         tlife[n]--;
                         bullets[i] = false;
                         bulletcount--;
@@ -273,16 +288,26 @@ void bulletmove() {
                     }
                 }
                 if(cbossalive == true) {
-                    if((abs(bulletx[i] - cbossx) < 60) && (abs(bullety[i] - cbossy) < 100) && bullets[i] == true) {
+                    if((abs(bulletx[i] - cbossx) < 60) && (abs(bullety[i] - cbossy) < 100) && bullets[i] == true && tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
                         cbosshp = cbosshp - 1;
                         bullets[i] = false;
                         bulletcount--;
                         if(cbosshp == 0) {
                             cbossalive = false;
-                            score = score + 25;
-                            cspawntime = cspawntime - 250;
-                            sspawntime = sspawntime - 500;
-                            tspawntime = tspawntime - 1;
+                            score = score + 50;
+                            ttimer.restart();
+                            stimer.restart();
+                        }
+                    }
+                }
+                if(sbossalive == true) {
+                    if((abs(bulletx[i] - sbossx) < 50) && (abs(bullety[i] - sbossy) < 50) && bullets[i] == true && tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
+                        sbosshp = sbosshp - 1;
+                        bullets[i] = false;
+                        bulletcount--;
+                        if(sbosshp == 0) {
+                            sbossalive = false;
+                            score = score + 75;
                             ttimer.restart();
                             stimer.restart();
                         }
@@ -351,7 +376,7 @@ void enemymove() {
                     tenemyy[e] = tenemyy[e] - abs(tenemyspeed[e]*sin(angle));
                 }
 
-                if(abs(x-tenemyx[e]) < 25 && abs(y-tenemyy[e]) < 25) {
+                if(abs(x-tenemyx[e]) < 30 && abs(y-tenemyy[e]) < 40) {
                     gameover = true;
                     Sleep(500);
                 }
@@ -446,9 +471,7 @@ void cbossmove() {
             cbossspeed = cbossspeed + 0.1;
         }
 
-        if(!((cbossx + cbossspeed) > 600) && !((cbossx + cbossspeed) < 100)) {
-            cbossx = cbossx + cbossspeed;
-        }
+        cbossx = cbossx + cbossspeed;
 
         if(abs(x-cbossx) < 60 && abs(y-cbossy) < 100) {
             gameover = true;
@@ -456,6 +479,35 @@ void cbossmove() {
         }
 
         cbosstimer.restart();
+    }
+}
+
+void sbossmove() {
+    if(sbosstimer.getElapsedTime().asMilliseconds() > 10) {
+        if(sbossx <= 50) {
+            sbossspeedx = 5;
+        } else if (sbossx >= 650) {
+            sbossspeedx = -5;
+        }
+
+        if(sbossy == 450) {
+            sbossspeedy = -5;
+        } else if(sbossy > 450) {
+            sbossy = 450;
+            sbossspeedy = 0;
+        } else {
+            sbossspeedy = sbossspeedy + 0.1;
+        }
+
+        sbossx = sbossx + sbossspeedx;
+        sbossy = sbossy + sbossspeedy;
+
+        if(abs(x-sbossx) < 50 && abs(y-sbossy) < 50) {
+            gameover = true;
+            Sleep(500);
+        }
+
+        sbosstimer.restart();
     }
 }
 
@@ -523,6 +575,11 @@ void draw() {
         window.draw(cboss);
     }
 
+    if(sbossalive == true) {
+        sboss.setPosition(sbossx,sbossy);
+        window.draw(sboss);
+    }
+
     window.draw(gun);
     window.draw(tank);
     window.display();
@@ -548,6 +605,8 @@ int main() {
                     gameover = false;
                     cbossfight = false;
                     cbossalive = false;
+                    sbossfight = false;
+                    sbossalive = false;
 
                     for(int i=0; i<100; i++) {
                         cenemyalive[i] = false;
@@ -572,6 +631,10 @@ int main() {
 
                     start = true;
                     bulletcount = 0;
+
+                    cspawntime = 1000;
+                    sspawntime = 3000;
+                    tspawntime = 7;
                 }
             }
         }
@@ -584,7 +647,7 @@ int main() {
                 tankmove();
                 bulletmove();
 
-                if(cbossalive == false) {
+                if(cbossalive == false && sbossalive == false) {
                     cspawn();
                     sspawn();
                     tspawn();
@@ -595,13 +658,26 @@ int main() {
                 if(score >= 50 && cbossfight == false) {
                     cbossalive = true;
                     cbossfight = true;
-                    cbosshp = 25;
-                    cbossx = (rand()%2)*500+100;
+                    cbosshp = 50;
+                    cbossx = (rand()%2)*600+50;
                     cbossspeed = 0;
                 }
                 if(cbossalive == true) {
                     if(tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
                         cbossmove();
+                    }
+                }
+                if(score >= 150 && sbossfight == false) {
+                    sbossalive = true;
+                    sbossfight = true;
+                    sbosshp = 50;
+                    sbossx = (rand()%2)*600+50;
+                    sbossy = 450;
+                    sbossspeedy = 0;
+                }
+                if(sbossalive == true) {
+                    if(tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
+                        sbossmove();
                     }
                 }
             } else {
