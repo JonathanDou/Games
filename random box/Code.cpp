@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <sstream>
 #include <ctime>
 #include <iostream>
@@ -10,6 +11,9 @@ sf::RenderWindow window(sf::VideoMode(700, 500), "Random Box");
 sf::Event event;
 
 std::fstream file;
+
+sf::SoundBuffer buffer;
+sf::Sound music;
 
 sf::Clock sbosstimer;
 sf::Clock cbosstimer;
@@ -120,6 +124,9 @@ int tmax = 3;
 int highscore;
 
 void load() {
+    buffer.loadFromFile("random music.wav");
+    music.setBuffer(buffer);
+    music.setLoop(true);
     font.loadFromFile("font.ttf");
 
     text.setString("0");
@@ -570,12 +577,12 @@ void draw() {
     window.draw(text);
     window.draw(high);
 
-    if(cbossalive == true) {
+    if(cbossalive == true && (tenemycount == 0 && cenemycount == 0 && senemycount == 0)) {
         cboss.setPosition(cbossx,cbossy);
         window.draw(cboss);
     }
 
-    if(sbossalive == true) {
+    if(sbossalive == true && (tenemycount == 0 && cenemycount == 0 && senemycount == 0)) {
         sboss.setPosition(sbossx,sbossy);
         window.draw(sboss);
     }
@@ -602,6 +609,7 @@ int main() {
             }
             if(event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Space) {
                 if(gameover == true || start == false) {
+                    music.play();
                     gameover = false;
                     cbossfight = false;
                     cbossalive = false;
@@ -682,6 +690,7 @@ int main() {
                 }
             } else {
                 gameend();
+                music.stop();
             }
         } else {
             gametext.setString("Press Space To Start");
@@ -694,6 +703,7 @@ int main() {
             window.draw(gametext);
             window.draw(controls);
             window.display();
+            music.stop();
         }
     }
 }
