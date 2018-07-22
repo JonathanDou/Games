@@ -218,8 +218,8 @@ void load() {
     tboss.setPointCount(3);
 
     tbossbomb.setFillColor(sf::Color::Magenta);
-    tbossbomb.setSize(sf::Vector2f(20,20));
-    tbossbomb.setOrigin(10,10);
+    tbossbomb.setSize(sf::Vector2f(50,50));
+    tbossbomb.setOrigin(25,25);
 
     for(int i=0; i<100; i++) {
         cenemyalive[i] = false;
@@ -569,16 +569,15 @@ void sbossmove() {
 
 void tbossmove() {
     if(tbosstimer.getElapsedTime().asMilliseconds() > 10) {
-
         if(tbossx < -100) {
             tboss.setRotation(90);
-            tbossspeedx = 4;
-            tbossy = rand()%230+205;
+            tbossspeedx = 5;
+            tbossy = rand()%370+65;
         }
         if(tbossx > 800) {
             tboss.setRotation(270);
-            tbossspeedx = -4;
-            tbossy = rand()%230+205;
+            tbossspeedx = -5;
+            tbossy = rand()%370+65;
         }
 
         if(abs(x-tbossx) < 50 && abs(y-tbossy) < 50) {
@@ -593,13 +592,14 @@ void tbossmove() {
 }
 
 void bombspawn() {
-    if(bombtimer.getElapsedTime().asMilliseconds() >= 650) {
+    if(bombtimer.getElapsedTime().asMilliseconds() >= 500) {
         for(int b=0; b<5; b++) {
             if(bombalive[b] == false) {
                 bombalive[b] = true;
                 bombx[b] = tbossx;
                 bomby[b] = tbossy;
                 bombspeed[b] = 4;
+                break;
             }
         }
         bombtimer.restart();
@@ -612,8 +612,12 @@ void bombmove() {
             if(bombalive[b] == true) {
                 bomby[b] = bomby[b] + bombspeed[b];
                 bombspeed[b] = bombspeed[b] + 0.1;
-                if(bomby[b] > 490) {
+                if(bomby[b] > 475) {
                     bombalive[b] = false;
+                }
+                if(abs(x-bombx[b]) < 35 && abs(y-bomby[b]) < 35) {
+                    gameover = true;
+                    Sleep(500);
                 }
             }
         }
@@ -748,7 +752,7 @@ int main() {
                     }
 
                     for(int i=0; i<5; i++) {
-                        bombalive[5] = false;
+                        bombalive[i] = false;
                     }
 
                     x = 350;
@@ -810,12 +814,12 @@ int main() {
                         sbossmove();
                     }
                 }
-                if(score >= 1 && tbossfight == false) {
+                if(score >= 250 && tbossfight == false) {
                     tbossalive = true;
                     tbossfight = true;
                     tbosshp = 50;
-                    tbossx = (rand()%2)*1000-200;
-                    tbossy = rand()%230+205;
+                    tbossx = (rand()%2)*1100-200;
+                    tbossy = rand()%370+65;
                 }
                 if(tbossalive == true) {
                     if(tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
