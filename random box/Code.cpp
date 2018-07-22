@@ -17,6 +17,9 @@ sf::Sound music;
 
 sf::Clock sbosstimer;
 sf::Clock cbosstimer;
+sf::Clock tbosstimer;
+sf::Clock bombtimer;
+sf::Clock bombmovetimer;
 sf::Clock tanktimer;
 sf::Clock falltimer;
 sf::Clock jtimer;
@@ -36,8 +39,11 @@ sf::CircleShape cboss;
 
 sf::RectangleShape gun;
 sf::RectangleShape senemy;
+sf::RectangleShape tbossbomb;
 
 sf::RectangleShape sboss;
+
+sf::CircleShape tboss;
 
 sf::Text text;
 sf::Text gametext;
@@ -62,10 +68,21 @@ bool sbossalive = false;
 bool sbossfight = false;
 double sbossspeedx = 0;
 double sbossspeedy = 0;
-
 int sbosshp;
 double sbossx;
 double sbossy = 450;
+
+bool tbossalive = false;
+bool tbossfight = false;
+double tbossspeedx = 0;
+int tbosshp;
+double tbossx;
+double tbossy;
+
+bool bombalive[5];
+double bombspeed[5];
+double bombx[5];
+double bomby[5];
 
 int cspawntime = 1000;
 int sspawntime = 3000;
@@ -124,10 +141,24 @@ int tmax = 3;
 int highscore;
 
 void load() {
+    font.loadFromFile("font.ttf");
+
+    gametext.setFillColor(sf::Color::Green);
+    gametext.setFont(font);
+    gametext.setCharacterSize(50);
+    gametext.setString("Loading...");
+
+    TextRect = gametext.getLocalBounds();
+
+    gametext.setOrigin(TextRect.width/2, TextRect.height/2);
+    gametext.setPosition(350,230);
+    window.clear();
+    window.draw(gametext);
+    window.display();
+
     buffer.loadFromFile("random music.wav");
     music.setBuffer(buffer);
     music.setLoop(true);
-    font.loadFromFile("font.ttf");
 
     text.setString("0");
     text.setFillColor(sf::Color::Green);
@@ -139,11 +170,6 @@ void load() {
     high.setFont(font);
     high.setCharacterSize(20);
     high.setPosition(670,10);
-
-    gametext.setFillColor(sf::Color::Green);
-    gametext.setFont(font);
-    gametext.setCharacterSize(50);
-    gametext.setPosition(250,200);
 
     srand(time(0));
 
@@ -186,6 +212,15 @@ void load() {
     sboss.setSize(sf::Vector2f(100,100));
     sboss.setOrigin(50,50);
 
+    tboss.setFillColor(sf::Color::Magenta);
+    tboss.setRadius(75);
+    tboss.setOrigin(75,75);
+    tboss.setPointCount(3);
+
+    tbossbomb.setFillColor(sf::Color::Magenta);
+    tbossbomb.setSize(sf::Vector2f(20,20));
+    tbossbomb.setOrigin(10,10);
+
     for(int i=0; i<100; i++) {
         cenemyalive[i] = false;
         cenemyspeed[i] = 2;
@@ -195,6 +230,7 @@ void load() {
         tenemyalive[i] = false;
         tenemyspeed[i] = 2;
     }
+
 }
 
 void tankmove() {
@@ -314,7 +350,20 @@ void bulletmove() {
                         bulletcount--;
                         if(sbosshp == 0) {
                             sbossalive = false;
-                            score = score + 75;
+                            score = score + 50;
+                            ttimer.restart();
+                            stimer.restart();
+                        }
+                    }
+                }
+                if(tbossalive == true) {
+                    if((abs(bulletx[i] - tbossx) < 25) && (abs(bullety[i] - tbossy) < 75) && bullets[i] == true && tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
+                        tbosshp = tbosshp - 1;
+                        bullets[i] = false;
+                        bulletcount--;
+                        if(tbosshp == 0) {
+                            tbossalive = false;
+                            score = score + 50;
                             ttimer.restart();
                             stimer.restart();
                         }
@@ -518,6 +567,60 @@ void sbossmove() {
     }
 }
 
+void tbossmove() {
+    if(tbosstimer.getElapsedTime().asMilliseconds() > 10) {
+
+        if(tbossx < -100) {
+            tboss.setRotation(90);
+            tbossspeedx = 4;
+            tbossy = rand()%230+205;
+        }
+        if(tbossx > 800) {
+            tboss.setRotation(270);
+            tbossspeedx = -4;
+            tbossy = rand()%230+205;
+        }
+
+        if(abs(x-tbossx) < 50 && abs(y-tbossy) < 50) {
+            gameover = true;
+            Sleep(500);
+        }
+
+        tbossx = tbossx + tbossspeedx;
+        tbosstimer.restart();
+    }
+
+}
+
+void bombspawn() {
+    if(bombtimer.getElapsedTime().asMilliseconds() >= 650) {
+        for(int b=0; b<5; b++) {
+            if(bombalive[b] == false) {
+                bombalive[b] = true;
+                bombx[b] = tbossx;
+                bomby[b] = tbossy;
+                bombspeed[b] = 4;
+            }
+        }
+        bombtimer.restart();
+    }
+}
+
+void bombmove() {
+    if(bombmovetimer.getElapsedTime().asMilliseconds() >= 10) {
+        for(int b=0; b<5; b++) {
+            if(bombalive[b] == true) {
+                bomby[b] = bomby[b] + bombspeed[b];
+                bombspeed[b] = bombspeed[b] + 0.1;
+                if(bomby[b] > 490) {
+                    bombalive[b] = false;
+                }
+            }
+        }
+        bombmovetimer.restart();
+    }
+}
+
 void gameend() {
     ss << score;
     ss >> scoretext;
@@ -587,9 +690,22 @@ void draw() {
         window.draw(sboss);
     }
 
+    if(tbossalive == true && (tenemycount == 0 && cenemycount == 0 && senemycount == 0)) {
+        tboss.setPosition(tbossx,tbossy);
+        window.draw(tboss);
+        for(int i=0; i<5; i++) {
+            if(bombalive[i] == true) {
+                tbossbomb.setPosition(bombx[i],bomby[i]);
+                window.draw(tbossbomb);
+            }
+        }
+    }
+
     window.draw(gun);
     window.draw(tank);
     window.display();
+
+    std::cout << cenemycount;
 }
 
 int main() {
@@ -615,6 +731,8 @@ int main() {
                     cbossalive = false;
                     sbossfight = false;
                     sbossalive = false;
+                    tbossfight = false;
+                    tbossalive = false;
 
                     for(int i=0; i<100; i++) {
                         cenemyalive[i] = false;
@@ -627,6 +745,10 @@ int main() {
                         if(i<5) {
                             bullets[i] = false;
                         }
+                    }
+
+                    for(int i=0; i<5; i++) {
+                        bombalive[5] = false;
                     }
 
                     x = 350;
@@ -655,7 +777,7 @@ int main() {
                 tankmove();
                 bulletmove();
 
-                if(cbossalive == false && sbossalive == false) {
+                if(cbossalive == false && sbossalive == false && tbossalive == false) {
                     cspawn();
                     sspawn();
                     tspawn();
@@ -686,6 +808,20 @@ int main() {
                 if(sbossalive == true) {
                     if(tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
                         sbossmove();
+                    }
+                }
+                if(score >= 1 && tbossfight == false) {
+                    tbossalive = true;
+                    tbossfight = true;
+                    tbosshp = 50;
+                    tbossx = (rand()%2)*1000-200;
+                    tbossy = rand()%230+205;
+                }
+                if(tbossalive == true) {
+                    if(tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
+                        tbossmove();
+                        bombspawn();
+                        bombmove();
                     }
                 }
             } else {
