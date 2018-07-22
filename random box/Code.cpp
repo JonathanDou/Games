@@ -318,7 +318,7 @@ void bulletmove() {
                     }
                 }
                 for(int n=0; n<tmax; n++) {
-                    if((tenemyalive[n] == true) && (abs(bulletx[i] - tenemyx[n]) < 35) && ((bullety[i] - tenemyy[n]) < 35) && ((tenemyy[n] - bullety[i]) < 55) && bullets[i] == true) {
+                    if((tenemyalive[n] == true) && (abs(bulletx[i] - tenemyx[n]) < 35) && ((bullety[i] - tenemyy[n]) < 30) && ((tenemyy[n] - bullety[i]) < 55) && bullets[i] == true) {
                         tlife[n]--;
                         bullets[i] = false;
                         bulletcount--;
@@ -357,7 +357,7 @@ void bulletmove() {
                     }
                 }
                 if(tbossalive == true) {
-                    if((abs(bulletx[i] - tbossx) < 25) && (abs(bullety[i] - tbossy) < 75) && bullets[i] == true && tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
+                    if((abs(bulletx[i] - tbossx) < 25) && (abs(bullety[i] - tbossy) < 60) && bullets[i] == true && tenemycount == 0 && cenemycount == 0 && senemycount == 0) {
                         tbosshp = tbosshp - 1;
                         bullets[i] = false;
                         bulletcount--;
@@ -500,7 +500,7 @@ void sspawn() {
 }
 
 void tspawn() {
-    if(ttimer.getElapsedTime().asSeconds() > tspawntime && tenemycount != tmax && score >= 25) {
+    if(ttimer.getElapsedTime().asSeconds() > tspawntime && tenemycount != tmax && score >= 20) {
         for(int c=0; c<tmax; c++) {
             if(tenemyalive[c] == false) {
 
