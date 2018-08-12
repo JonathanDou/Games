@@ -5,7 +5,7 @@
 using namespace std;
 
 int main() {
-    int sizex = 51;
+    int sizex = 31;
     int sizey = 41;
     srand(time(0));
 
@@ -29,8 +29,6 @@ int main() {
     int num3 = (num-1)*(num2-1);
     int mazex = (rand()%(num-1)+1)*2;
     int mazey = (rand()%(num2-1)+1)*2;
-    int x2 = mazex;
-    int y2 = mazey;
     int startx = 2;
     int starty = 2;
     int endx = sizex-3;
@@ -110,10 +108,13 @@ int main() {
             } else {
                 cout << "  ";
             }
+
         }
+
+
         cout << "\n";
+
     }
-    cout << x2 << y2;
 
     system("pause");
 }
