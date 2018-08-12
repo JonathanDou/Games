@@ -1,3 +1,3 @@
-some games I made with c++ and sfml. 
+some 2D games I made with c++ and sfml. 
 
-random box is the my biggest project so far 
+random box is an original and the biggest game out of these
