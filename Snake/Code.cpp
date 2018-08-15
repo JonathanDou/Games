@@ -58,14 +58,23 @@ void reset() {
 
 void change() {
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-        d = 1;
+        if(d != 3) {
+            d = 1;
+        }
     } else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-        d = 2;
+        if(d != 4) {
+            d = 2;
+        }
     } else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-        d = 3;
+        if(d != 1) {
+            d = 3;
+        }
     } else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-        d = 4;
+        if(d != 2) {
+            d = 4;
+        }
     }
+
     time2.restart();
 }
 
@@ -152,6 +161,7 @@ void draw() {
 }
 
 int main() {
+
     window.setFramerateLimit(60);
     icon.loadFromFile("icon.png");
     window.setIcon(32,32,icon.getPixelsPtr());
@@ -166,6 +176,7 @@ int main() {
     text.setPosition(20,20);
     text.setFont(font);
     text.setString("Press Space to Start\nArrow Keys to Move");
+
     while(window.isOpen()) {
         sf::Event event;
         while(window.pollEvent(event)) {
@@ -195,5 +206,3 @@ int main() {
         }
     }
 }
-
-
